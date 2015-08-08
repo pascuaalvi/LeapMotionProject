@@ -16,6 +16,7 @@ function Image(source) {
 
     this.img.style.left = position[0] - img.width  / 2 + 'px';
     this.img.style.top  = position[1] - img.height / 2 + 'px';
+    this.img.z-index = position[2];
 
     this.img.style.transform = 'rotate(' + -rotation + 'rad)';
 
