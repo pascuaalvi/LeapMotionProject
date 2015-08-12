@@ -44,7 +44,7 @@ Leap.loop(options, function(frame) {
     frame.hands.forEach(function(hand, index) {
         // if hand is not known, initialise cursor and remember hand
         if (!(hand.id in knownHands)) {
-            knownHands[hand.id] = new Image(0);
+            knownHands[hand.id] = new Image(0,'cursor');
         }
 
         // if hand is grabbed
@@ -113,7 +113,7 @@ var idGenerator = function() {
     return idCounter++;
 };
 
-var Image = function(imgNo) {
+var Image = function(imgNo, type) {
     var image = this;
     var img = document.createElement('img');
     img.id = idGenerator();
@@ -122,13 +122,26 @@ var Image = function(imgNo) {
     } else {
         img.src = 'images/images' + imgNo + '.jpg';
     }
-    img.style.position = 'inline-block';
-    img.style.width = '200px';
-    img.style.height = '25%';
+    if(type == 'thumbnail'){
+        img.style.position = 'inline-block';
+        img.style.width = '200px';
+        img.style.height = '25%';
+    }
+    else{
+        img.style.position = 'absolute';
+    }
+    // An element with greater stack 
+    // order is always in front of an element with a lower stack order.
+    img.style.zIndex = 2147483647;
+    
     img.onload = function() {
-        //image.setTransform([window.innerWidth/2,window.innerHeight/2], 0);
-        //document.body.appendChild(img);
-        $("#thumbnail").append(img);
+        image.setTransform([window.innerWidth/2,window.innerHeight/2], 0);
+        document.body.appendChild(img);
+        //$("#thumbnail").append(img);
+    }
+
+    image.type = function() {
+        return type;
     }
 
     image.isPointOn = function(position) {
@@ -146,16 +159,14 @@ var Image = function(imgNo) {
     };
 
     image.setTransform = function(position, rotation) {
-        if ($(this).hasClass("selected")) {
-            img.style.left = position[0] - img.width / 2 + 'px';
-            img.style.top = position[1] - img.height / 2 + 'px';
+        img.style.left = position[0] - img.width / 2 + 'px';
+        img.style.top = position[1] - img.height / 2 + 'px';
+        if(image.type == 'canvas'){
             img.style.zIndex = position[2];
-
             img.style.transform = 'rotate(' + -rotation + 'rad)';
-
-            img.style.webkitTransform = img.style.MozTransform = img.style.msTransform =
-            img.style.OTransform = img.style.transform;
         }
+        img.style.webkitTransform = img.style.MozTransform = img.style.msTransform =
+        img.style.OTransform = img.style.transform;
     };
 
     image.deleteElement = function(){
@@ -178,7 +189,7 @@ var grabImage = function(position) {
 }
 
 for (var i = 4; i < 5; i++) {
-    images[i] = new Image(i);
+    images[i] = new Image(i,'thumbnail');
 }
 
 Leap.loopController.setBackground(true);
