@@ -18,7 +18,7 @@ var Image = function(imgNo) {
     $("#thumbnail img").removeClass("selected");
     img.classList.add("selected");
   }
-  
+
   image.setTransform = function(position, rotation) {
     if($(this).hasClass("selected")){
       console.log(position+" X "+rotation);
@@ -26,7 +26,7 @@ var Image = function(imgNo) {
       img.style.top  = position[1] - img.height / 2 + 'px';
 
       img.style.transform = 'rotate(' + -rotation + 'rad)';
-      
+
       img.style.webkitTransform = img.style.MozTransform = img.style.msTransform =
       img.style.OTransform = img.style.transform;
     }
@@ -34,7 +34,7 @@ var Image = function(imgNo) {
 
 };
 
-images[0] = new Image(1);
-images[1] = new Image(2);
-images[2] = new Image(3);
-images[3] = new Image(4);
+// images[0] = new Image(1);
+// images[1] = new Image(2);
+// images[2] = new Image(3);
+// images[3] = new Image(4);
