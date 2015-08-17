@@ -25,10 +25,10 @@ Leap.loop(options, function(frame) {
         knownHand = parseInt(knownHand);
         // if lost track of a hand
         if (handIds.indexOf(knownHand) == -1) {
-            console.log('removing hand: ' + knownHand);
+            //console.log('removing hand: ' + knownHand);
             //delete image if grabbed and remove cursor
             if (knownHand in grabbedHands) {
-                console.log('hand was grabbed as well')
+                //console.log('hand was grabbed as well')
                 //// remove hand if in grabbedHands (let go of image) and delete from canvas
                 canvasImages[grabbedHands[knownHand]].deleteElement();
                 delete canvasImages[grabbedHands[knownHand]];
@@ -85,7 +85,8 @@ Leap.loop(options, function(frame) {
                 grabbedHands[hand.id] = image;
                 ////// put image into grabbedHands
                 // document.getElementById("Image").src='images/images'+imgno+'.jpg';
-                image.setTransform(hand.screenPosition(), hand.rotation());
+                //console.log(hand);
+                image.setTransform(hand.screenPosition(), hand.rotation);
                 // apply transformations
             }
         } else {
@@ -127,7 +128,7 @@ var Image = function(imgNo, type) {
     if(type == 'thumbnail'){
         img.style.position = 'absolute';
         img.style.left = '0px';
-        var offset =  200 * imgNo;
+        var offset =  180 * (imgNo-1);
         img.style.top = offset + 'px';
         img.style.width = '200px';
     }
@@ -139,7 +140,7 @@ var Image = function(imgNo, type) {
     img.style.zIndex = 2147483647;
 
     img.onload = function() {
-        image.setTransform([window.innerWidth/2,window.innerHeight/2], 0);
+//        image.setTransform([window.innerWidth/2,window.innerHeight/2], 0);
         if(image.type() == 'thumbnail'){
           // document.getElementById('thumbnail').appendChild(img);
           document.body.appendChild(img);
@@ -171,8 +172,8 @@ var Image = function(imgNo, type) {
     };
 
     image.center = function(){
-      console.log('removePX(img.style.left)');
-      console.log(removePX(img.style.left));
+//      console.log('removePX(img.style.left)');
+//      console.log(removePX(img.style.left));
       return[
         centerX = removePX(img.style.left) + removePX(img.style.width)/2,
         centerY = removePX(img.style.top) + removePX(img.style.height)/2
@@ -222,7 +223,7 @@ var grabImage = function(position) {
     return null;
 }
 
-for (var i = 1; i < 2; i++) {
+for (var i = 1; i < 5; i++) {
     images.push( new Image(i,'thumbnail'));
 }
 
