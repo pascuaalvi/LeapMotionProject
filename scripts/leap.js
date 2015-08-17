@@ -95,16 +95,49 @@ Leap.loop(options, function(frame) {
         }
     });
 
-    // frame.gestures.forEach(function(gesture){
-    //   if (gesture.type === circle){
-    //     var image = grabbedHands[gesture.handIds[0]];
-    //     if (image == null){
-    //       //ignore
-    //     } else {
-    //       // apply image scaling
-    //     }
-    //   }
-    // });
+    frame.gestures.forEach(function(gesture){
+      if (gesture.type === 'circle'){
+        var image = grabbedHands[gesture.handIds[0]];
+        if (image == null){
+          //ignore
+
+          // tests for now
+          var magnitude = gesture.radius;
+          var heightMagnitude = 20 * (radius/100);
+          var widthMagnitude = 12 * (radius/100);
+          if(gesture.normal[2] > 0){
+            // Counter-Clockwise circle
+            console.log("Counter Clock");
+          }
+          else{
+            // Clockwise circle
+            console.log("Clock");
+          }
+          console.log("Height Change:"+heightMagnitude);
+          console.log("Width Change:"+widthMagnitude);
+          // end test
+
+        } else {
+          // apply image scaling
+          console.log("Circle Gesture with Image");
+          var magnitude = gesture.radius;
+          var heightMagnitude = 20 * (radius/100);
+          var widthMagnitude = 12 * (radius/100);
+          if(gesture.normal[2] > 0){
+            // Counter-Clockwise circle
+            console.log("Counter Clock");
+            image.img.style.width = image.img.style.width - widthMagnitude;
+            image.img.style.height = image.img.style.height - heightMagnitude;
+          }
+          else{
+            // Clockwise circle
+            console.log("Clock");
+            image.img.style.width = image.img.style.width + widthMagnitude;
+            image.img.style.height = image.img.style.height + heightMagnitude;
+          }
+        }
+      }
+    });
 }).use('screenPosition', {
     scale: 1
 });
@@ -119,27 +152,30 @@ var Image = function(imgNo, type) {
     var image = this;
     var img = document.createElement('img');
     img.id = idGenerator();
+    img.style.position = 'absolute';
     if (imgNo == 0) {
         img.src = 'images/circle.png';
     } else {
         img.src = 'images/images' + imgNo + '.jpg';
     }
     if(type == 'thumbnail'){
-        img.style.position = 'absolute';
-        img.style.left = '0px';
-        var offset =  200 * imgNo;
-        img.style.top = offset + 'px';
         img.style.width = '200px';
+        img.style.height = '120px';
+        img.style.left = '10px';
+
+        var offset = (150 * imgNo) - 140;
+
+        img.style.top = offset + 'px';
     }
     else{
-        img.style.position = 'absolute';
+        
     }
     // An element with greater stack
     // order is always in front of an element with a lower stack order.
     img.style.zIndex = 2147483647;
 
     img.onload = function() {
-        image.setTransform([window.innerWidth/2,window.innerHeight/2], 0);
+        //image.setTransform([window.innerWidth/2,window.innerHeight/2], 0);
         if(image.type() == 'thumbnail'){
           // document.getElementById('thumbnail').appendChild(img);
           document.body.appendChild(img);
@@ -222,8 +258,8 @@ var grabImage = function(position) {
     return null;
 }
 
-for (var i = 1; i < 2; i++) {
-    images.push( new Image(i,'thumbnail'));
+for (var i = 1; i < 5; i++) {
+    images.push(new Image(i,'thumbnail'));
 }
 
 Leap.loopController.setBackground(true);
