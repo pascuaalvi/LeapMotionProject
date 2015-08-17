@@ -49,6 +49,10 @@
   // Set up plugins
 
   Leap.loop()
+    .use('transform', {
+      position: new THREE.Vector3(0,-100,0),
+      scale: 1
+    })
     .use('boneHand', {
       targetEl: document.body,
       arm: true,
