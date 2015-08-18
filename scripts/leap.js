@@ -51,7 +51,8 @@ Leap.loop(options, function(frame) {
         knownHands[hand.id].setTransform(hand.screenPosition(), 0);
 
         // if hand is grabbed
-        if (hand.grabStrength > 0.7) {
+//        if (hand.grabStrength > 0.7) {
+          if grabbed(hand) {
             //// if hand id is in grabbedHands
             if (hand.id in grabbedHands) {
                 ////// apply transformation to image
@@ -96,49 +97,16 @@ Leap.loop(options, function(frame) {
         }
     });
 
-    frame.gestures.forEach(function(gesture){
-      if (gesture.type === 'circle'){
-        var image = grabbedHands[gesture.handIds[0]];
-        if (image == null){
-          //ignore
-
-          // tests for now
-          var magnitude = gesture.radius;
-          var heightMagnitude = 20 * (magnitude/100);
-          var widthMagnitude = 12 * (magnitude/100);
-          if(gesture.normal[2] > 0){
-            // Counter-Clockwise circle
-            console.log("Counter Clock");
-          }
-          else{
-            // Clockwise circle
-            console.log("Clock");
-          }
-          console.log("Height Change:"+heightMagnitude);
-          console.log("Width Change:"+widthMagnitude);
-          // end test
-
-        } else {
-          // apply image scaling
-          console.log("Circle Gesture with Image");
-          var magnitude = gesture.radius;
-          var heightMagnitude = 20 * (magnitude/100);
-          var widthMagnitude = 12 * (magnitude/100);
-          if(gesture.normal[2] > 0){
-            // Counter-Clockwise circle
-            console.log("Counter Clock");
-            image.img.style.width = image.img.style.width - widthMagnitude;
-            image.img.style.height = image.img.style.height - heightMagnitude;
-          }
-          else{
-            // Clockwise circle
-            console.log("Clock");
-            image.img.style.width = image.img.style.width + widthMagnitude;
-            image.img.style.height = image.img.style.height + heightMagnitude;
-          }
-        }
-      }
-    });
+    // frame.gestures.forEach(function(gesture){
+    //   if (gesture.type === circle){
+    //     var image = grabbedHands[gesture.handIds[0]];
+    //     if (image == null){
+    //       //ignore
+    //     } else {
+    //       // apply image scaling
+    //     }
+    //   }
+    // });
 }).use('screenPosition', {
     scale: 1
 });
@@ -256,8 +224,27 @@ var grabImage = function(position) {
     return null;
 }
 
+var grabbed = function(hand) {
+    var middle = false;
+    var ring = false;
+    var pinky = false;
+    for(var f = 0; f < hand.fingers.length; f++){
+        var finger = hand.fingers[f];
+        if (finger.type==2) {
+            middle = finger.extended;
+        } else if (finger.type==3) {
+            ring = finger.extended;
+        } else if (finger.type==4) {
+            pinky = finger.extended;
+        }
+    }
+    
+    return !middle && !ring && !pinky;
+}
+
 for (var i = 1; i < 5; i++) {
     images.push( new Image(i,'thumbnail'));
 }
+
 
 Leap.loopController.setBackground(true);
