@@ -4,11 +4,19 @@
 		<script src="http://js.leapmotion.com/leap-0.6.4.js"></script>
 		<script src="http://js.leapmotion.com/leap-plugins-0.1.10.js"></script>
 		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
-		<script src="scripts/thumbnail.js"></script>
+    
+    <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+		
+    <script src="scripts/thumbnail.js"></script>
 		<script src="scripts/lib/three.js"></script>
 		<script src="scripts/leap.js"></script>
-          <script src="scripts/lib/OrbitControls.js"></script>
-          <script src="scripts/lib/leap.bone-hand.js"></script>
+    <script src="scripts/lib/OrbitControls.js"></script>
+    <script src="scripts/lib/leap.bone-hand.js"></script>
+    
+    <script src="scripts/design.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+    
     <style>
     body {
       margin: 10px;
@@ -22,10 +30,33 @@
     }
   </style>
 
+  
+
 </head>
 <body>
-		<div id="thumbnail" style="width:20%;height:100%;float:left"></div>
+
+    <div id="dialog" title="Basic dialog">
+      <p>Image:</p>
+      <img id="tutorial" src="" alt="Placeholder Image" />
+    </div>
+
+    <script>
+
+
+    </script>
+
+
+
+		
+    <!--<button class="saveButton">Save Picture</button>-->
+    <button id="grab" class="generalButton">Grab Pictures</button>
+    <button id="scaling" class="generalButton">Scaling Picture</button>
+    <button id="move" class="generalButton">Move Picture</button>
+    <div id="buttonsBar" ></div>
+    <div id="thumbnail" style="width:20%;height:100%;float:left"></div>
 		<div id="main" style="width:80%;height:100%;float:right"></div>
+
+    
 </body>
 
 <script>
@@ -36,13 +67,40 @@
     .use('transform', {
       position: new THREE.Vector3(0,-400,0),
       scale: 3
-    }).use('boneHand', {
+    })
+    .use('boneHand', {
       targetEl: document.body,
       arm: true,
       opacity: 0.5,
       boneScale: 1
     });
 
+    //trying to reconginze the hand WORKING
+    var controller = Leap.loop(function(frame){
+      var hand = frame.hands[0];
+      var position;
+      if(frame.hands.length > 0)
+        {
+           //alert("1 hand is on the screen");
+           //alert(frame.hand[0].palmPosition);
+           
+          position = hand.palmPosition;
+          console.log('Hand Position: ' + position);
+          var elements = document.getElementById('thumbnail').getElementsByTagName('img');
+          elements.onclick = function(){
+            alert("bla0");
+          }
+          console.log(elements[0]);
+          
+               
+        }
+
+
+
+
+    });
+
+   
   // Set up scene
 
   var scene    = Leap.loopController.plugins.boneHand.scene;
@@ -69,7 +127,22 @@
     if (Leap.loopController.frame(0).hands.length === 0){
       document.querySelector('canvas').style.display = 'none';
     }
+    
+
+    //my code
+    
   });
+
+
+
+
+
+
+// $("#thumbnail").mouseenter(function(){
+//     alert("You entered p1!");
+// }); 
+
+$(this).parent().css("background", "url(images/wallpaper.png) no-repeat");
 
 
 </script>
