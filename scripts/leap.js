@@ -53,7 +53,7 @@ Leap.loop({
                       continue;
                   } else if (grabbedHands[key] == image) {
                     ////// if image is already grabbed, return because we cant grab again
-                    grabbedHands[hand.id()] = null;
+                    grabbedHands[hand.id] = null;
                     return;
                   }
               }
@@ -75,7 +75,14 @@ Leap.loop({
     }
 })
 .use('riggedHand',{
-  checkWebGL: true
+  checkWebGL: true,
+  boneColors: function (boneMesh, leapHand){
+    return {
+      hue: 0.564,
+      saturation: 1,
+      lightness: 0.5
+  }}
+
 })
 .use('handEntry')
 .on('handLost', function(hand){
@@ -88,6 +95,7 @@ Leap.loop({
 });
 
 Leap.loop({enableGestures: true}, function(frame){
+  document.getElementsByTagName('canvas')[0].style.zIndex = 2147483645;
   if(frame.valid && frame.gestures.length > 0){
     frame.gestures.forEach(function(gesture){
       if (gesture.type === 'circle'){
@@ -243,7 +251,7 @@ var removePX = function(str){
 
 var grabImage = function(position) {
     canvasImages.sort(function(obj1, obj2) {
-        if (obj1 == null || obj2 == null){
+        if (obj1.img.style == null || obj2.img.style == null){
           return 0;
         }
         return obj2.img.style.zIndex - obj1.img.style.zIndex;
