@@ -3,7 +3,6 @@ $ = jQuery;
 
 var images = [];
 var canvasImages = [];
-var knownHands = {} // hand ids to their cursor elements
 var grabbedHands = {} // hand id -> Image, or [hand id] is holding [Image]
 
 var options = {
@@ -13,89 +12,68 @@ var last_rotate = 0;
 var reset = 1;
 var rotation = 0;
 
-Leap.loop(options, function(frame) {
-    // Get the ids of all the hands present in the frame
-    var handIds = [];
-    for (h in frame.hands) {
-        handIds.push(frame.hands[h].id);
-    }
+var riggedHandPlugin;
 
-    //remove any hands that have been removed from the frame
-    for (knownHand in knownHands) {
-        knownHand = parseInt(knownHand);
-        // if lost track of a hand
-        if (handIds.indexOf(knownHand) == -1) {
-            //console.log('removing hand: ' + knownHand);
-            //delete image if grabbed and remove cursor
-            if (knownHand in grabbedHands) {
-                //console.log('hand was grabbed as well')
-                //// remove hand if in grabbedHands (let go of image) and delete from canvas
-                canvasImages[grabbedHands[knownHand]].deleteElement();
-                delete canvasImages[grabbedHands[knownHand]];
-                delete grabbedHands[knownHand.id];
-            }
-            // if a known hand has now been removed, forget the hand
-            knownHands[knownHand].deleteElement();
-            delete knownHands[knownHand];
-        }
-    }
+Leap.loop({
+  hand: function(hand){
+      var handMesh = hand.data('riggedHand.mesh');
+      var handScale = 0.2;
+      handMesh.scale = new THREE.Vector3(handScale, handScale, handScale);
+      var screenPosition = handMesh.screenPosition(
+        hand.palmPosition,
+        riggedHandPlugin.camera
+      );
 
-    // if hand has dissappeared from frame, remove from grabbedHands
-    frame.hands.forEach(function(hand, index) {
-        // if hand is not known, initialise cursor and remember hand
-        if (!(hand.id in knownHands)) {
-            knownHands[hand.id] = new Image(0,'cursor');
-        }
+      // if hand is grabbed
+      if (hand.grabStrength > 0.7) {
+          //// if hand id is in grabbedHands
+          if (hand.id in grabbedHands) {
+              ////// apply transformation to image
+              if (grabbedHands[hand.id] == null){
+                return;
+              } else {
+                grabbedHands[hand.id].setTransform(hand.screenPosition(), last_rotate);
+              }
+          } else {
+              //// else
+              var image = grabImage(screenPosition);
 
-        //// update cursor location and image
-        knownHands[hand.id].setTransform(hand.screenPosition(), 0);
-
-        // if hand is grabbed
-        if (hand.grabStrength > 0.7) {
-            //// if hand id is in grabbedHands
-            if (hand.id in grabbedHands) {
-                ////// apply transformation to image
-                if (grabbedHands[hand.id] == null){
+              if (image == null) {
+                  //if hand is freshly grabbed without finding an image
+                  grabbedHands[hand.id] = null;
                   return;
-                } else {
-                  grabbedHands[hand.id].setTransform(hand.screenPosition(), last_rotate);
-                }
-            } else {
-                //// else
-                var image = grabImage(hand.screenPosition());
+              }
 
-                if (image == null) {
-                    //if hand is freshly grabbed without finding an image
-                    grabbedHands[hand.id] = null;
+              ////// find if image is already grabbed
+              for (key in grabbedHands) {
+                  if (key == hand.id()) {
+                      console.log('Error, hand (' + hand.id + ') should not be in grabbedHands')
+                      continue;
+                  } else if (grabbedHands[key] == image) {
+                    grabbedHands[hand.id()] = null;
                     return;
-                }
+                      ////// if image is already grabbed, return because we cant grab again
+                  }
+              }
 
-                ////// find if image is already grabbed
-                for (key in grabbedHands) {
-                    if (key == hand.id()) {
-                        console.log('Error, hand (' + hand.id + ') should not be in grabbedHands')
-                        continue;
-                    } else if (grabbedHands[key] == image) {
-                      grabbedHands[hand.id()] = null;
-                      return;
-                        ////// if image is already grabbed, return because we cant grab again
-                    }
-                }
+              grabbedHands[hand.id] = image;
+              ////// put image into grabbedHands
+              // document.getElementById("Image").src='images/images'+imgno+'.jpg';
+              //console.log(hand);
+              image.setTransform(hand.screenPosition(), hand.rotation);
+              // apply transformations
+          }
+      }
+    }
+})
+.use('riggedHand')
+.use('handEntry')
+.on('handLost', function(hand){
+  delete grabbedHands[hand.id];
+});
 
-                grabbedHands[hand.id] = image;
-                ////// put image into grabbedHands
-                // document.getElementById("Image").src='images/images'+imgno+'.jpg';
-                //console.log(hand);
-                image.setTransform(hand.screenPosition(), hand.rotation);
-                // apply transformations
-            }
-        } else {
-            // else
-            delete grabbedHands[hand.id];
-            //// remove hand if in grabbedHands (let go of image)
-        }
-    });
-
+Leap.loop({enableGestures: true}, function(frame){
+  if(frame.valid && frame.gestures.length > 0){
     frame.gestures.forEach(function(gesture){
       if (gesture.type === 'circle'){
         var image = grabbedHands[gesture.handIds[0]];
@@ -139,9 +117,11 @@ Leap.loop(options, function(frame) {
         }
       }
     });
-}).use('screenPosition', {
-    scale: 1
+  }
 });
+
+
+riggedHandPlugin = Leap.loopController.plugins.riggedHand;
 
 var idCounter = 0;
 var idGenerator = function() {
@@ -153,11 +133,7 @@ var Image = function(imgNo, type) {
     var image = this;
     var img = document.createElement('img');
     img.id = idGenerator();
-    if (imgNo == 0) {
-        img.src = 'images/circle.png';
-    } else {
-        img.src = 'images/images' + imgNo + '.jpg';
-    }
+    img.src = 'images/images' + imgNo + '.jpg';
     if(type == 'thumbnail'){
         img.style.position = 'absolute';
         img.style.left = '0px';
@@ -170,7 +146,7 @@ var Image = function(imgNo, type) {
     }
     // An element with greater stack
     // order is always in front of an element with a lower stack order.
-    img.style.zIndex = 2147483647;
+    img.style.zIndex = 2147483640;
 
     img.onload = function() {
 //        image.setTransform([window.innerWidth/2,window.innerHeight/2], 0);
