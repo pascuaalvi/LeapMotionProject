@@ -22,10 +22,8 @@ Leap.loop({
 
       var rotation = handMesh.rotation.z;
 
-      //console.log(screenPosition.y)
       screenPosition.y = invertHeight(screenPosition.y);
 
-      //console.log(screenPosition.y)
       // if hand is grabbed
       if (isGrabbed(hand)) {
           //// if hand id is in grabbedHands
@@ -123,14 +121,12 @@ Leap.loop({enableGestures: true}, function(frame){
           var heightMagnitude = 20 * (magnitude/100);
           var widthMagnitude = 12 * (magnitude/100);
           if(gesture.normal[2] > 0){
-            console.log('Counter-Clockwise');
             // Counter-Clockwise circle
             image.scale(widthMagnitude * -1,heightMagnitude * -1);
             //image.img.style.width = image.img.style.width - widthMagnitude;
             //image.img.style.height = image.img.style.height - heightMagnitude;
           }
           else{
-            console.log('Clockwise');
             image.scale(widthMagnitude,heightMagnitude);
             // image.img.style.width = image.img.style.width + widthMagnitude;
             // image.img.style.height = image.img.style.height + heightMagnitude;
@@ -227,7 +223,6 @@ var Image = function(imgNo, type) {
         img.style.left = position.x - img.width / 2 + 'px';
         img.style.top = position.y - img.height / 2 + 'px';
         if(image.type() == 'canvas'){
-          console.log(img.style.zIndex, position.z * 100);
             img.style.zIndex = -Math.round(position.z * 100000);
             img.style.transform = 'rotate(' + (rotation + Math.PI) + 'rad)';
         }
@@ -241,7 +236,6 @@ var Image = function(imgNo, type) {
     };
 
     image.scale = function(widthMagnitude,heightMagnitude){
-      console.log(widthMagnitude,heightMagnitude);
       img.style.width = (removePX(img.style.width) + widthMagnitude) + 'px';
       img.style.height = (removePX(img.style.height) + heightMagnitude) + 'px';
     }
