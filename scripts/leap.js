@@ -27,7 +27,7 @@ Leap.loop({
 
       //console.log(screenPosition.y)
       // if hand is grabbed
-      if (hand.grabStrength > 0.7) {
+      if (isGrabbed(hand)) {
           //// if hand id is in grabbedHands
           if (hand.id in grabbedHands) {
               ////// apply transformation to image
@@ -113,14 +113,17 @@ Leap.loop({enableGestures: true}, function(frame){
           var heightMagnitude = 20 * (magnitude/100);
           var widthMagnitude = 12 * (magnitude/100);
           if(gesture.normal[2] > 0){
+            console.log('Counter-Clockwise');
             // Counter-Clockwise circle
-            image.img.style.width = image.img.style.width - widthMagnitude;
-            image.img.style.height = image.img.style.height - heightMagnitude;
+            image.scale(widthMagnitude * -1,heightMagnitude * -1);
+            //image.img.style.width = image.img.style.width - widthMagnitude;
+            //image.img.style.height = image.img.style.height - heightMagnitude;
           }
           else{
-            // Clockwise circle
-            image.img.style.width = image.img.style.width + widthMagnitude;
-            image.img.style.height = image.img.style.height + heightMagnitude;
+            console.log('Clockwise');
+            image.scale(widthMagnitude,heightMagnitude);
+            // image.img.style.width = image.img.style.width + widthMagnitude;
+            // image.img.style.height = image.img.style.height + heightMagnitude;
           }
         }
       }
@@ -214,7 +217,8 @@ var Image = function(imgNo, type) {
         img.style.left = position.x - img.width / 2 + 'px';
         img.style.top = position.y - img.height / 2 + 'px';
         if(image.type() == 'canvas'){
-            img.style.zIndex = position.z;
+          console.log(img.style.zIndex, position.z * 100);
+            img.style.zIndex = -Math.round(position.z * 100000);
             img.style.transform = 'rotate(' + (rotation + Math.PI) + 'rad)';
         }
         img.style.webkitTransform = img.style.MozTransform = img.style.msTransform =
@@ -225,6 +229,12 @@ var Image = function(imgNo, type) {
         var element = document.getElementById(img.id);
         element.parentNode.removeChild(element);
     };
+
+    image.scale = function(widthMagnitude,heightMagnitude){
+      console.log(widthMagnitude,heightMagnitude);
+      img.style.width = (removePX(img.style.width) + widthMagnitude) + 'px';
+      img.style.height = (removePX(img.style.height) + heightMagnitude) + 'px';
+    }
 };
 
 var removePX = function(str){
@@ -262,6 +272,23 @@ for (var i = 1; i < 5; i++) {
 var invertHeight = function(y){
   var canvasHeight = document.getElementsByTagName('canvas')[0].height;
   return canvasHeight - y;
+};
+
+var isGrabbed = function(hand){
+  var middle = false, ring = false, pinky = false;
+
+  for(var f = 0; f < hand.fingers.length; f++){
+      var finger = hand.fingers[f];
+      if (finger.type==2) {
+          middle = !finger.extended;
+      } else if (finger.type==3) {
+          ring = !finger.extended;
+      } else if (finger.type==4) {
+          pinky = !finger.extended;
+      }
+  }
+
+  return middle && ring && pinky;
 };
 
 Leap.loopController.setBackground(true);
