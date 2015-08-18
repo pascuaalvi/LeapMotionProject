@@ -8,17 +8,13 @@ var grabbedHands = {} // hand id -> Image, or [hand id] is holding [Image]
 var options = {
     enableGestures: true
 };
-var last_rotate = 0;
 var reset = 1;
-var rotation = 0;
 
 var riggedHandPlugin;
 
 Leap.loop({
   hand: function(hand){
       var handMesh = hand.data('riggedHand.mesh');
-      var handScale = 0.2;
-      handMesh.scale = new THREE.Vector3(handScale, handScale, handScale);
       var screenPosition = handMesh.screenPosition(
         hand.palmPosition,
         riggedHandPlugin.camera
@@ -32,7 +28,7 @@ Leap.loop({
               if (grabbedHands[hand.id] == null){
                 return;
               } else {
-                grabbedHands[hand.id].setTransform(hand.screenPosition(), last_rotate);
+                grabbedHands[hand.id].setTransform(screenPosition, hand.rotation);
               }
           } else {
               //// else
@@ -46,30 +42,42 @@ Leap.loop({
 
               ////// find if image is already grabbed
               for (key in grabbedHands) {
-                  if (key == hand.id()) {
+                  if (key == hand.id) {
                       console.log('Error, hand (' + hand.id + ') should not be in grabbedHands')
                       continue;
                   } else if (grabbedHands[key] == image) {
+                    ////// if image is already grabbed, return because we cant grab again
                     grabbedHands[hand.id()] = null;
                     return;
-                      ////// if image is already grabbed, return because we cant grab again
                   }
               }
 
+              //check if grabbed image is thumbnail
+              //create copy on canvas if it is
+              if (image.type() == 'thumbnail'){
+                image = new Image(image.imageNumber(), 'canvas');
+                image.setTransform(screenPosition, hand.rotation);
+
+              }
+
               grabbedHands[hand.id] = image;
-              ////// put image into grabbedHands
-              // document.getElementById("Image").src='images/images'+imgno+'.jpg';
-              //console.log(hand);
-              image.setTransform(hand.screenPosition(), hand.rotation);
-              // apply transformations
+
+              image.setTransform(screenPosition, hand.rotation);
           }
+      }else{
+        delete grabbedHands[hand.id];
       }
     }
 })
 .use('riggedHand')
 .use('handEntry')
 .on('handLost', function(hand){
-  delete grabbedHands[hand.id];
+  //TODO if in grabbedHands remove from both grabbedHands and canvas
+})
+.on('handFound', function(hand){
+  var handMesh = hand.data('riggedHand.mesh');
+  var handScale = 0.2;
+  handMesh.scale = new THREE.Vector3(handScale, handScale, handScale);
 });
 
 Leap.loop({enableGestures: true}, function(frame){
@@ -86,31 +94,24 @@ Leap.loop({enableGestures: true}, function(frame){
           var widthMagnitude = 12 * (magnitude/100);
           if(gesture.normal[2] > 0){
             // Counter-Clockwise circle
-            console.log("Counter Clock");
           }
           else{
             // Clockwise circle
-            console.log("Clock");
           }
-          console.log("Height Change:"+heightMagnitude);
-          console.log("Width Change:"+widthMagnitude);
           // end test
 
         } else {
           // apply image scaling
-          console.log("Circle Gesture with Image");
           var magnitude = gesture.radius;
           var heightMagnitude = 20 * (magnitude/100);
           var widthMagnitude = 12 * (magnitude/100);
           if(gesture.normal[2] > 0){
             // Counter-Clockwise circle
-            console.log("Counter Clock");
             image.img.style.width = image.img.style.width - widthMagnitude;
             image.img.style.height = image.img.style.height - heightMagnitude;
           }
           else{
             // Clockwise circle
-            console.log("Clock");
             image.img.style.width = image.img.style.width + widthMagnitude;
             image.img.style.height = image.img.style.height + heightMagnitude;
           }
@@ -136,13 +137,19 @@ var Image = function(imgNo, type) {
     img.src = 'images/images' + imgNo + '.jpg';
     if(type == 'thumbnail'){
         img.style.position = 'absolute';
-        img.style.left = '0px';
         var offset =  180 * (imgNo-1);
+        img.style.left = '0px';
         img.style.top = offset + 'px';
         img.style.width = '200px';
+        img.style.height = '120px';
     }
     else{
         img.style.position = 'absolute';
+        img.style.left = '500px';
+        img.style.top = '500px';
+        img.style.width = '200px';
+        img.style.height = '120px';
+
     }
     // An element with greater stack
     // order is always in front of an element with a lower stack order.
@@ -163,16 +170,21 @@ var Image = function(imgNo, type) {
         return type;
     }
 
+    image.imageNumber = function(){
+      return imgNo;
+    }
+
     image.isPointOn = function(position) {
         c = image.center();
+
 
         var radians =  -1 * img.style.transform.substring(7, img.style.transform.length - 4);
 
         var cos = Math.cos(radians),
         sin = Math.sin(radians);
 
-        var nx = (cos * (position[0] - c[0])) - (sin * (position[1] - c[1])) + c[0],
-        ny = (sin * (position[0]- c[0])) + (cos * (position[1] - c[1])) + c[1];
+        var nx = (cos * (position.x - c[0])) - (sin * (position.y - c[1])) + c[0],
+        ny = (sin * (position.x- c[0])) + (cos * (position.y - c[1])) + c[1];
 
         nx -= removePX(img.style.left);
         ny -= removePX(img.style.top);
@@ -181,8 +193,6 @@ var Image = function(imgNo, type) {
     };
 
     image.center = function(){
-//      console.log('removePX(img.style.left)');
-//      console.log(removePX(img.style.left));
       return[
         centerX = removePX(img.style.left) + removePX(img.style.width)/2,
         centerY = removePX(img.style.top) + removePX(img.style.height)/2
@@ -201,7 +211,6 @@ var Image = function(imgNo, type) {
     };
 
     image.deleteElement = function(){
-        console.log('calling delete element on cursor with id: ' + img.id);
         var element = document.getElementById(img.id);
         element.parentNode.removeChild(element);
     };
@@ -212,13 +221,10 @@ var removePX = function(str){
 };
 
 var grabImage = function(position) {
-
-    console.log('grabbing image at:');
-    console.log(position);
-
     canvasImages.sort(function(obj1, obj2) {
         return obj2.img.style.zIndex - obj1.img.style.zIndex;
     })
+
     for (image in images) {
         if (images[image].isPointOn(position)) {
             return images[image];
