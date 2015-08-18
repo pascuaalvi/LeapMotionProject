@@ -20,6 +20,12 @@ Leap.loop({
         riggedHandPlugin.camera
       );
 
+      var rotation = handMesh.rotation.z;
+
+      //console.log(screenPosition.y)
+      screenPosition.y = invertHeight(screenPosition.y);
+
+      //console.log(screenPosition.y)
       // if hand is grabbed
       if (hand.grabStrength > 0.7) {
           //// if hand id is in grabbedHands
@@ -28,7 +34,7 @@ Leap.loop({
               if (grabbedHands[hand.id] == null){
                 return;
               } else {
-                grabbedHands[hand.id].setTransform(screenPosition, hand.rotation);
+                grabbedHands[hand.id].setTransform(screenPosition, rotation);
               }
           } else {
               //// else
@@ -56,20 +62,21 @@ Leap.loop({
               //create copy on canvas if it is
               if (image.type() == 'thumbnail'){
                 image = new Image(image.imageNumber(), 'canvas');
-                image.setTransform(screenPosition, hand.rotation);
-
+                canvasImages.push(image);
               }
 
               grabbedHands[hand.id] = image;
 
-              image.setTransform(screenPosition, hand.rotation);
+              image.setTransform(screenPosition, rotation);
           }
       }else{
         delete grabbedHands[hand.id];
       }
     }
 })
-.use('riggedHand')
+.use('riggedHand',{
+  checkWebGL: true
+})
 .use('handEntry')
 .on('handLost', function(hand){
   //TODO if in grabbedHands remove from both grabbedHands and canvas
@@ -166,6 +173,10 @@ var Image = function(imgNo, type) {
         // document.body.appendChild(img);
     }
 
+    image.img = function () {
+      return img;
+    }
+
     image.type = function() {
         return type;
     }
@@ -200,11 +211,11 @@ var Image = function(imgNo, type) {
     };
 
     image.setTransform = function(position, rotation) {
-        img.style.left = position[0] - img.width / 2 + 'px';
-        img.style.top = position[1] - img.height / 2 + 'px';
-        if(image.type == 'canvas'){
-            img.style.zIndex = position[2];
-            img.style.transform = 'rotate(' + -rotation + 'rad)';
+        img.style.left = position.x - img.width / 2 + 'px';
+        img.style.top = position.y - img.height / 2 + 'px';
+        if(image.type() == 'canvas'){
+            img.style.zIndex = position.z;
+            img.style.transform = 'rotate(' + (rotation + Math.PI) + 'rad)';
         }
         img.style.webkitTransform = img.style.MozTransform = img.style.msTransform =
         img.style.OTransform = img.style.transform;
@@ -222,17 +233,23 @@ var removePX = function(str){
 
 var grabImage = function(position) {
     canvasImages.sort(function(obj1, obj2) {
+        if (obj1 == null || obj2 == null){
+          return 0;
+        }
         return obj2.img.style.zIndex - obj1.img.style.zIndex;
     })
 
+    // for the thumbnails
     for (image in images) {
         if (images[image].isPointOn(position)) {
             return images[image];
         }
     }
-    for (images[image] in canvasImages) {
-        if (images[image].isPointOn(position)) {
-            return images[image];
+
+    //for the images on the canvas
+    for (image in canvasImages) {
+        if (canvasImages[image].isPointOn(position)) {
+            return canvasImages[image];
         }
     }
     return null;
@@ -241,5 +258,10 @@ var grabImage = function(position) {
 for (var i = 1; i < 5; i++) {
     images.push( new Image(i,'thumbnail'));
 }
+
+var invertHeight = function(y){
+  var canvasHeight = document.getElementsByTagName('canvas')[0].height;
+  return canvasHeight - y;
+};
 
 Leap.loopController.setBackground(true);
